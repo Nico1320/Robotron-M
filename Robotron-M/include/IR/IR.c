@@ -47,8 +47,8 @@ void initIrPins(void)
 	
 // Returns left IR sensor reading
 int leftIrSensorRead(void)
-	{
-		if ((PINB & (1<<PINB0)) == 1)
+{
+		if ((PINB & (1<<PINB0)))
 		{
 			return LINE_DETECTED;
 		}
@@ -56,7 +56,7 @@ int leftIrSensorRead(void)
 		{
 			return LINE_NOT_DETECTED;
 		}
-	}
+}
 	
 // Returns middle IR sensor reading
 int middleIrSensorRead(void)

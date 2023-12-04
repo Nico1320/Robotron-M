@@ -148,10 +148,22 @@
     <Compile Include="include\Bit_bang\ShiftRegister.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\Display\lcd.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\Display\lcd_i2cmaster.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\H_bridge\HBridge.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\H_bridge\HBridge.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\I2C\i2cmaster.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\I2C\twimaster.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\IR\IR.h">
@@ -181,6 +193,8 @@
     <Folder Include="include\Bit_bang" />
     <Folder Include="include\Baremetal" />
     <Folder Include="include\IR" />
+    <Folder Include="include\I2C" />
+    <Folder Include="include\Display" />
     <Folder Include="include\Ultrasonic" />
     <Folder Include="include\Soft_serial\" />
     <Folder Include="include" />
