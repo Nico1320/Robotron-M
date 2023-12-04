@@ -1,4 +1,3 @@
-#pragma once
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -18,12 +17,12 @@
 #error TX buffer size is not a power of 2
 #endif
 
-// Define baud-rate, etc.
-#define F_CPU 16000000UL  // Assuming a 16MHz clock frequency
+// Define baud-rate
+#define F_CPU 16000000UL
 #define BAUDRATE 9600
 #define myUBRR ((F_CPU / 16UL / BAUDRATE) - 1)
 
-// Static variables
+// Static variables 
 static char USART_RxBuf[USART_RX_BUFFER_SIZE];
 static volatile unsigned char USART_RxHead;
 static volatile unsigned char USART_RxTail;
@@ -32,6 +31,7 @@ static volatile unsigned char USART_TxHead;
 static volatile unsigned char USART_TxTail;
 
 // Function prototypes
+void clearUSART();
 void usart0_init(void);
 char usart0_receive(void);
 void usart0_transmit(char data);
@@ -187,4 +187,12 @@ void usart0_transmit_str(char *str)
     {
         usart0_transmit(*str++);
     }
+}
+
+void clearUSART() {
+	UCSR0B = 0;
+	UCSR0A = 0;
+	UCSR0C = 0;
+	UBRR0H = 0;
+	UBRR0L = 0;
 }

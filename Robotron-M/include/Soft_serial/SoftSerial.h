@@ -12,6 +12,6 @@ void usart0_init(void);
 char usart0_receive(void);
 void usart0_transmit(char data);
 unsigned char usart0_nUnread(void);
-void usart0_transmitStr(char *str);
-
+void usart0_transmit_str(char *str);
+void clearUSART();
 #endif /* SOFTSERIAL_H_ */

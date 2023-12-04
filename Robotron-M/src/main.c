@@ -8,9 +8,10 @@
 #include <avr/sfr_defs.h>
 #include "./H_bridge/HBridge.h"
 #include "./Soft_serial/SoftSerial.h"
-#include "./Bit_bang/ShiftRegister.h"
+//#include "./Baremetal/Baremetal.h"
+//#include "./Bit_bang/ShiftRegister.h"
 
-#define SAMPLING_TIME_MS 800 // Set the sampling time in milliseconds
+#define DELAY_TIME_MS 35 // Set the sampling time in milliseconds
 
 // Global variable to track the state of key press
 volatile uint8_t keyPressed = 0;
@@ -20,7 +21,7 @@ int main(void) {
 	usart0_init();
 	sei();
 	initializeHbridge();
-	setupTimer();
+	//setupTimer();
 	usart0_transmit_str("Main loop running!\r\n");
 
 	while (1)
@@ -31,7 +32,7 @@ int main(void) {
 			switch (data)
 			{
 				case 'w':
-				setPWM(200, 200);
+				setPWM(255, 255);
 				goForward();
 				break;
 
@@ -51,8 +52,7 @@ int main(void) {
 				break;
 
 				default:
-				usart0_transmit_str("No input detected\r\n");
-				clearPrevious();
+				usart0_transmit_str("Invalid input\r\n");
 				break;
 			}
 
@@ -60,7 +60,7 @@ int main(void) {
 			keyPressed = 1;
 
 			// Introduce a delay for sampling time
-			_delay_ms(SAMPLING_TIME_MS);
+			_delay_ms(DELAY_TIME_MS);
 		}
 		else
 		{
@@ -73,7 +73,7 @@ int main(void) {
 		}
 	}
 
-	// Clear USART registers after the loop
+	// Clear USART registers after the loop	
 	clearUSART();
-	return 0; // This is just for completeness; main() should not reach here.
+	return 0;
 }

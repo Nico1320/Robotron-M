@@ -7,6 +7,7 @@
 
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
+#include "Baremetal/Baremetal.h"
 #define _BV(bit) (1 << (bit)) //Set bit
 
 /*
@@ -35,16 +36,6 @@ void initializeHbridge() {
 	//		PB0- IN2	  PB1 - IN3    PB2 - IN4     
     DDRD |= (_BV(PIND5) | _BV(PIND6) | _BV(PIND7));
 }	//		PD5 - ENB     PD6 - ENA	   PD7 - IN1
-
-
-void setupTimer() {
-    // Sets up Timer/Counter0 for FAST PWM mode with a prescaler of n/1024
-    TCCR0A |= (_BV(WGM01) | _BV(WGM00) | _BV(COM0A1) | _BV(COM0B1));
-    TCCR0B |= (_BV(CS02)  | _BV(CS00));
-	if (debugMode == 1) {
-	}
-	else {}
-}
 
 
 void setPWM(uint8_t dutyCycleA, uint8_t dutyCycleB) {
