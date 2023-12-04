@@ -154,6 +154,12 @@
     <Compile Include="include\H_bridge\HBridge.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\IR\IR.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\IR\IR.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\Soft_serial\SoftSerial.c">
       <SubType>compile</SubType>
     </Compile>
@@ -174,6 +180,7 @@
     <Folder Include="include\H_bridge\" />
     <Folder Include="include\Bit_bang" />
     <Folder Include="include\Baremetal" />
+    <Folder Include="include\IR" />
     <Folder Include="include\Ultrasonic" />
     <Folder Include="include\Soft_serial\" />
     <Folder Include="include" />
