@@ -21,7 +21,7 @@ int main(void) {
 	usart0_init();
 	sei();
 	initializeHbridge();
-	//setupTimer();
+	setupTimer();
 	usart0_transmit_str("Main loop running!\r\n");
 
 	while (1)

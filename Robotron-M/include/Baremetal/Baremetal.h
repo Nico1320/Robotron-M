@@ -8,6 +8,6 @@
 
 #ifndef BAREMETAL_H_
 #define BAREMETAL_H_
-void setupTimer();
+//void setupTimer();
 
 #endif /* BAREMETAL_H_ */
