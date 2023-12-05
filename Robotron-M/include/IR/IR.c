@@ -56,7 +56,7 @@ int irSensorRead(int sensor_select)
 {
 	if (sensor_select == LEFT_IR_SENSOR)
 	{
-		if ((PINB & (1<<PINB0)) == 1)
+		if (PINB & (1<<PINB0))
 		{
 			return LINE_DETECTED;
 		}
@@ -68,7 +68,7 @@ int irSensorRead(int sensor_select)
 	
 	else if (sensor_select == MIDDLE_IR_SENSOR)
 	{
-		if ((PINB & (1<<PINB1)) == 1)
+		if (PINB & (1<<PINB1))
 		{
 			return LINE_DETECTED;
 		}
@@ -80,7 +80,7 @@ int irSensorRead(int sensor_select)
 	
 	else if (sensor_select == RIGHT_IR_SENSOR)
 	{
-		if ((PINB & (1<<PINB2)) == 1)
+		if (PINB & (1<<PINB2))
 		{
 			return LINE_DETECTED;
 		}
