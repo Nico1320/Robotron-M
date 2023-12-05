@@ -11,6 +11,10 @@
 #define F_CPU (16000000UL)
 #define LINE_DETECTED 1
 #define LINE_NOT_DETECTED 0
+#define LEFT_IR_SENSOR 0
+#define MIDDLE_IR_SENSOR 1
+#define RIGHT_IR_SENSOR 2
+
 
 /*
 int irReadArray [3];
@@ -22,14 +26,14 @@ int rightIrSensorRead(void);
 /*
 int main(void)
 {
-	
+	initIrPins();
 	
 // Only for testing
     while (1) 
     {
-		irReadArray [0] = leftIrSensorRead();
-		irReadArray [1] = middleIrSensorRead();
-		irReadArray [2] = rightIrSensorRead();
+		irReadArray [0] = irSensorRead(LEFT_IR_SENSOR);
+		irReadArray [1] = irSensorRead(MIDDLE_IR_SENSOR);
+		irReadArray [2] = irSensorRead(RIGHT_IR_SENSOR);
 		break;
     }
 
@@ -37,49 +41,52 @@ int main(void)
 }
 */
 
+// Security pin init function to set the pins to be input 
 void initIrPins(void)
 	{
-		// pin set to input (security check)
+		
 		DDRB &= ~(1<<DDB0);
 		DDRB &= ~(1<<DDB1);
 		DDRB &= ~(1<<DDB2);
 	}
 	
-// Returns left IR sensor reading
-int leftIrSensorRead(void)
+
+// Function to read IR sensor data
+int irSensorRead(int sensor_select)
 {
-		if ((PINB & (1<<PINB0)))
+	if (sensor_select == LEFT_IR_SENSOR)
+	{
+		if ((PINB & (1<<PINB0)) == 1)
 		{
 			return LINE_DETECTED;
 		}
-		else 
+		else
 		{
 			return LINE_NOT_DETECTED;
 		}
-}
+	}
 	
-// Returns middle IR sensor reading
-int middleIrSensorRead(void)
-{
-	if ((PINB & (1<<PINB1)) == 1)
+	else if (sensor_select == MIDDLE_IR_SENSOR)
 	{
-		return LINE_DETECTED;
+		if ((PINB & (1<<PINB1)) == 1)
+		{
+			return LINE_DETECTED;
+		}
+		else
+		{
+			return LINE_NOT_DETECTED;
+		}
 	}
-	else
+	
+	else if (sensor_select == RIGHT_IR_SENSOR)
 	{
-		return LINE_NOT_DETECTED;
-	}
-}
-
-// Returns right IR sensor reading
-int rightIrSensorRead(void)
-{
-	if ((PINB & (1<<PINB2)) == 1)
-	{
-		return LINE_DETECTED;
-	}
-	else
-	{
-		return LINE_NOT_DETECTED;
+		if ((PINB & (1<<PINB2)) == 1)
+		{
+			return LINE_DETECTED;
+		}
+		else
+		{
+			return LINE_NOT_DETECTED;
+		}
 	}
 }
