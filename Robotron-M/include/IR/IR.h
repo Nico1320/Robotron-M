@@ -3,10 +3,8 @@
 
 /* Prototype of the IR functions */
 
-int leftIrSensorRead(void);
-int middleIrSensorRead(void);
-int rightIrSensorRead(void);
 void initIrPins(void);
+int irSensorRead(int sensor_select);
 
 #endif
 
