@@ -6,11 +6,11 @@
  */ 
 
 
-#ifndef INCFILE1_H_
-#define INCFILE1_H_
+#ifndef ULTRASONIC_H_
+#define ULTRASONIC_H_
+void ultrasonicInit();
+float ultrasonicRead();
 
 
 
-
-
-#endif /* INCFILE1_H_ */
+#endif /*ULTRASONIC_H_ */
