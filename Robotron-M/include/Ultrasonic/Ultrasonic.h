@@ -12,5 +12,4 @@ void ultrasonicInit();
 float ultrasonicRead();
 
 
-
 #endif /*ULTRASONIC_H_ */

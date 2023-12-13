@@ -3,6 +3,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
@@ -17,10 +18,7 @@ extern void lcd_backlight(char on);
 
 #define DELAY_TIME_MS 35 // Set the sampling time in milliseconds
 
-// Global variable to track the state of key press
-volatile char resultString[20];
 uint8_t keyPressed = 0;
-
 
 int main(void) {
 	
@@ -38,14 +36,18 @@ int main(void) {
 
 	while (1)
 	{
+		char mystr[16];
+		float distance = ultrasonicRead();
 		lcd_clrscr();
         lcd_gotoxy(0, 0);
-		
-		sprintf(resultString, "%.2f", ultrasonicRead());
-	    lcd_puts(resultString);
+		lcd_puts_P(" Distance: ");
+		lcd_gotoxy(10, 0);
+	    lcd_puts(dtostrf(distance, 0, 2, mystr));
 		lcd_gotoxy(0, 1);
-		lcd_puts("Second Line");
+		lcd_puts("Speed");
 		_delay_ms(1000);
+		
+		
 		
 		if (usart0_nUnread() > 0)
 		{
@@ -55,6 +57,7 @@ int main(void) {
 				case 'w':
 				setPWM(255, 255);
 				goForward();
+				
 				break;
 
 				case 's':
@@ -74,7 +77,6 @@ int main(void) {
 
 				default:
 				usart0_transmit_str("Invalid input\r\n");
-				usart0_transmit_str(*resultString);
 				break;
 			}
 
