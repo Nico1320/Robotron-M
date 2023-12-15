@@ -5,50 +5,52 @@
 #include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
 #include <stdbool.h>
+
 // Include modules
 #include "./H_bridge/HBridge.h"
 #include "./Soft_serial/SoftSerial.h"
 #include "./Ultrasonic/Ultrasonic.h"
 #include "./Display/lcd.h"
-
+#include "./LEDrgb/ws28xx.h"
 //#include "./Baremetal/Baremetal.h"
 //#include "./Bit_bang/ShiftRegister.h"
 
 // Defines
 #define DELAY_TIME_MS 35 // Set the sampling time in milliseconds
 bool serialFlag;
+bool keyPressed = false;
+bool debugMode;
+float inputRatio = 0.8;
 
-volatile int keyPressed = 0;
 //Function prototypes
 void manualMode();
 void automaticMode();
 void slaveMode();
-void setupMC();
+void initializeModules();
 
 void manualMode() {
 	// Wait for USART data to become available
-	while (usart0_nUnread() == 0) {
-		if (!serialFlag) {
-			// Display message when serial communication is not detected
-			lcd_clrscr();
-			lcd_gotoxy(0, 0);
-			lcd_puts(" Serial not ");
-			lcd_gotoxy(0, 1);
-			lcd_puts(" Detected");
-			serialFlag = true;
-			} else if (usart0_nUnread() > 0) {
-			// Display message when serial communication is detected
+	while (!serialFlag) {
+		lcd_clrscr();
+		lcd_gotoxy(0, 0);
+		lcd_puts(" Serial not ");
+		lcd_gotoxy(0, 1);
+		lcd_puts(" Detected");
+		serialFlag = usart0_receive();
+		if (serialFlag) {
 			lcd_clrscr();
 			lcd_gotoxy(0, 0);
 			lcd_puts(" Serial");
 			lcd_gotoxy(0, 1);
 			lcd_puts("Detected!");
+			usart0_transmit_str("Receive ready!\r\n");
+			_delay_ms(3000);
 			serialFlag = false;
 			break;
 		}
 	}
 
-	// Continuous operation loop
+	// Manual mode loop
 	while (!serialFlag) {
 		// Check for available USART data
 		if (usart0_nUnread() > 0) {
@@ -80,13 +82,13 @@ void manualMode() {
 			}
 
 			// Set flag and introduce delay
-			keyPressed = 1;
+			keyPressed = true;
 			_delay_ms(DELAY_TIME_MS);
 			} else {
 			// Clear previous state if flag is set
 			if (keyPressed) {
 				clearPrevious();
-				keyPressed = 0; // Reset the flag
+				keyPressed = false; // Reset the flag
 			}
 		}
 	}
@@ -97,14 +99,31 @@ void manualMode() {
 
 
 void automaticMode() {
-	return 0;
+		turningRatio(inputRatio);
+		char ratioinput[8]; /*destination array size defined*/
+		char Lreslt[8];
+		char Rresult[8];
+		float Lspeed = OCR0A;
+		float Rspeed = OCR0B;
+		dtostrf(inputRatio, 5, 1, ratioinput); /*Destination string is printed*/
+
+		dtostrf(Lspeed, 5, 0, Lreslt); /*Destination string is printed*/
+		dtostrf(Rspeed, 5, 0, Rresult); /*Destination string is printed*/
+
+		usart0_transmit_str(ratioinput);
+		usart0_transmit_str("\r\n");
+		usart0_transmit_str(Lreslt);
+		usart0_transmit_str("\r\n");
+		usart0_transmit_str(Rresult);
+		usart0_transmit_str("\r\n");
+
 }
 
 void slaveMode() {
 	return 0;
 }
 
-void setupMC() {
+void initializeModules() {
 	usart0_init();
 
 	initializeHbridge();
@@ -121,3 +140,20 @@ void setupMC() {
 //	ultrasonicInit();
 	sei();
 }
+
+void rgbtest() {
+	  while(1) {
+		  led[0].r=255;led[0].g=00;led[0].b=0;    // Write red to array
+		  ws2812_setleds(led,1);
+		  _delay_ms(500);                         // wait for 500ms.
+
+		  led[0].r=0;led[0].g=255;led[0].b=0;			// green
+		  ws2812_setleds(led,1);
+		  _delay_ms(500);
+
+		  led[0].r=0;led[0].g=00;led[0].b=255;		// blue
+		  ws2812_setleds(led,1);
+		  _delay_ms(500);
+	  }
+}
+

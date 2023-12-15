@@ -26,9 +26,7 @@ void zeroRadii();
 void goForward();
 void goBackward();
 void clearPrevious();
-
-// Prints configuration of pins and timers related to this library
-uint8_t debugMode = 0;
+void turningRatio(float ratio);
 
 void initializeHbridge() {
     // Motor control initialization
@@ -77,4 +75,18 @@ void goBackward() {
 void clearPrevious() {
 	PORTB &= ~(_BV(PINB0) | _BV(PINB1) | _BV(PINB2));
 	PORTD &= ~(_BV(PIND7));
+}
+
+void turningRatio(float ratio) {
+	uint8_t maxChannelValue = 255;
+	if (ratio < 1) {
+		OCR0A = (maxChannelValue * ratio);
+		OCR0B = maxChannelValue;
+		} else if (ratio > 1) {
+		OCR0A = maxChannelValue;
+		OCR0B = (maxChannelValue / ratio);
+		} else {
+		OCR0A = maxChannelValue;
+		OCR0B = maxChannelValue;
+	}
 }

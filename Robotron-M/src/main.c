@@ -4,11 +4,11 @@
 #include "./Controller/Controller.h"
 
 int main(void) {
-	setupMC();
+	initializeModules();
 
 	while (1) {
 		enum CarMode {Automatic, Slave, Manual};
-		enum CarMode mode = Manual;
+		enum CarMode mode = Automatic;
 
 		switch (mode) {
 			case Automatic:

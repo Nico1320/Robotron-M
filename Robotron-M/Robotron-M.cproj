@@ -179,6 +179,18 @@
     <Compile Include="include\IR\IR.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\LEDrgb\ws28xx.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\LEDrgb\ws28xx.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\PID\PID.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\PID\PID.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\Soft_serial\SoftSerial.c">
       <SubType>compile</SubType>
     </Compile>
@@ -203,6 +215,8 @@
     <Folder Include="include\I2C" />
     <Folder Include="include\Display" />
     <Folder Include="include\Controller" />
+    <Folder Include="include\LEDrgb" />
+    <Folder Include="include\PID" />
     <Folder Include="include\Ultrasonic" />
     <Folder Include="include\Soft_serial\" />
     <Folder Include="include" />

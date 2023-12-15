@@ -16,5 +16,6 @@ void zeroRadii();
 void goForward();
 void goBackward();
 void clearPrevious();
+void turningRatio(float ratio);
 
 #endif /* MOTOR_H_ */

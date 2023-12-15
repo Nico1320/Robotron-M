@@ -12,7 +12,7 @@
 void manualMode();
 void automaticMode();
 void slaveMode();
-void setupMC();
+void initializeModules();
 
 
 #endif /* CONTROLLER_H_ */
