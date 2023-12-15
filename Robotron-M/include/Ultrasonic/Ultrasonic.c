@@ -1,9 +1,3 @@
-/*
- * main.c
- *
- *  Created on: Jun 13, 2017
- *      Author: Mina G. Sadek
- */
 #include <stdio.h>
 #include <avr/io.h>
 #include <util/delay.h>
@@ -30,9 +24,7 @@
 //Function prototype
 void ultrasonicInit();
 float ultrasonicRead();
-void floatToString(float value, char* buffer, int precision);
 static volatile int pulse_time = 0;
-  // Adjust the size based on your requirements
 
 ultrasonicInit(void) {
 	TRIG_DDR |= (1<<TRIG_PIN);

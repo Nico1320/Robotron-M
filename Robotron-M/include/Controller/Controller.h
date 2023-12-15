@@ -9,8 +9,10 @@
 #ifndef CONTROLLER_H_
 #define CONTROLLER_H_
 
-
-
+void manualMode();
+void automaticMode();
+void slaveMode();
+void setupMC();
 
 
 #endif /* CONTROLLER_H_ */
