@@ -12,15 +12,29 @@
 #include "./Ultrasonic/Ultrasonic.h"
 #include "./Display/lcd.h"
 #include "./LEDrgb/ws28xx.h"
+#include "./IR/IR.h"
 //#include "./Baremetal/Baremetal.h"
 //#include "./Bit_bang/ShiftRegister.h"
 
 // Defines
 #define DELAY_TIME_MS 35 // Set the sampling time in milliseconds
+
+// IR defines for selecting the sensor to read
+#define SENSOR_LEFT 0
+#define SENSOR_MIDDLE 1
+#define SENSOR_RIGHT 2
+
+// Ultrasonic defines
+#define MINIMUM_DISTANCE 10
+
+// global variable init
 bool serialFlag;
 bool keyPressed = false;
 bool debugMode;
 float inputRatio = 0.8;
+bool slaveModeActive = false;
+// mode interruption flag set by ISR
+bool modeInterrupt = false;
 
 //Function prototypes
 void manualMode();
@@ -120,7 +134,81 @@ void automaticMode() {
 }
 
 void slaveMode() {
-	return 0;
+	// Reading the 3 IR sensors
+	int leftIrRead = irSensorRead(SENSOR_LEFT);
+	int middleIrRead = irSensorRead(SENSOR_MIDDLE);
+	int rightIrRead = irSensorRead(SENSOR_RIGHT);
+	// Ultrasonic read
+	int ulsRead = (int)ultrasonicRead();
+	
+	// Slave mode enable flag to prevent from unwanted start
+	slaveModeActive = true;
+	
+	while(slaveModeActive)
+	{
+		// stops the car until distance > MINIMUM_DISTANCE
+		if(ulsRead < MINIMUM_DISTANCE)
+		{
+			// ISR enabled/disabled branch
+			if(!modeInterrupt)
+			{
+			// stopfunction(); has to be implemented
+			}
+			else
+			{
+				slaveModeActive = false;
+				break;
+			}
+			
+		}
+		
+		// Right turn
+		else if(ulsRead > MINIMUM_DISTANCE && (leftIrRead || (leftIrRead && middleIrRead)))
+		{
+			
+			if(!modeInterrupt)
+			{
+				// discuss the exact value and use #define + possible setPWM() refactor
+				turningRatio(2.0);
+			}
+			else
+			{
+				slaveModeActive = false;
+				break;
+			}
+			
+		}
+		
+		// Go straight
+		else if(ulsRead > MINIMUM_DISTANCE && middleIrRead)
+		{
+			
+			if(!modeInterrupt)
+			{
+				goForward(); // possible setPWM refactor also
+			}
+			else
+			{
+				slaveModeActive = false;
+				break;
+			}
+			
+		// Left turn
+		else if(ulsRead > MINIMUM_DISTANCE && (rightIrRead || (rightIrRead && middleIrRead)))
+		{
+			if(!modeInterrupt)
+			{
+				// discuss the exact value and use #define + possible setPWM() refactor
+				turningRatio(0.6);
+			}
+			else
+			{
+				slaveModeActive = false;
+				break;
+			}
+		}
+	}
+	
 }
 
 void initializeModules() {
