@@ -32,9 +32,8 @@ bool serialFlag;
 bool keyPressed = false;
 bool debugMode;
 float inputRatio = 0.8;
+// Slave mode interruption flag set by ISR
 bool slaveModeActive = false;
-// mode interruption flag set by ISR
-bool modeInterrupt = false;
 
 //Function prototypes
 void manualMode();
@@ -134,79 +133,47 @@ void automaticMode() {
 }
 
 void slaveMode() {
-	// Reading the 3 IR sensors
-	int leftIrRead = irSensorRead(SENSOR_LEFT);
-	int middleIrRead = irSensorRead(SENSOR_MIDDLE);
-	int rightIrRead = irSensorRead(SENSOR_RIGHT);
-	// Ultrasonic read
-	int ulsRead = (int)ultrasonicRead();
 	
-	// Slave mode enable flag to prevent from unwanted start
 	slaveModeActive = true;
 	
 	while(slaveModeActive)
 	{
+		// Reading the 3 IR sensors
+		int leftIrRead = irSensorRead(SENSOR_LEFT);
+		int middleIrRead = irSensorRead(SENSOR_MIDDLE);
+		int rightIrRead = irSensorRead(SENSOR_RIGHT);
+		
+		// Ultrasonic read
+		int ulsRead = (int)ultrasonicRead();
+		
 		// stops the car until distance > MINIMUM_DISTANCE
 		if(ulsRead < MINIMUM_DISTANCE)
 		{
-			// ISR enabled/disabled branch
-			if(!modeInterrupt)
-			{
 			// stopfunction(); has to be implemented
-			}
-			else
-			{
-				slaveModeActive = false;
-				break;
-			}
-			
 		}
 		
+		// In all cases, MINIMUM_DISTANCE should be reviewed and replaced (if needed) to handle a predecessor which is getting closer but not within the minimum range
 		// Right turn
 		else if(ulsRead > MINIMUM_DISTANCE && (leftIrRead || (leftIrRead && middleIrRead)))
-		{
-			
-			if(!modeInterrupt)
-			{
-				// discuss the exact value and use #define + possible setPWM() refactor
-				turningRatio(2.0);
-			}
-			else
-			{
-				slaveModeActive = false;
-				break;
-			}
-			
+		{	
+			// discuss the exact value and use #define + possible setPWM() refactor
+			turningRatio(2.0);
 		}
 		
 		// Go straight
 		else if(ulsRead > MINIMUM_DISTANCE && middleIrRead)
 		{
-			
-			if(!modeInterrupt)
-			{
 				goForward(); // possible setPWM refactor also
-			}
-			else
-			{
-				slaveModeActive = false;
-				break;
-			}
+		}
 			
 		// Left turn
 		else if(ulsRead > MINIMUM_DISTANCE && (rightIrRead || (rightIrRead && middleIrRead)))
 		{
-			if(!modeInterrupt)
-			{
-				// discuss the exact value and use #define + possible setPWM() refactor
-				turningRatio(0.6);
-			}
-			else
-			{
-				slaveModeActive = false;
-				break;
-			}
+			// discuss the exact value and use #define + possible setPWM() refactor
+			turningRatio(0.6);
 		}
+		
+		// Delay is needed here to minimize the frequency of direction change
 	}
 	
 }
