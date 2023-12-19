@@ -13,6 +13,9 @@ void manualMode();
 void automaticMode();
 void slaveMode();
 void initializeModules();
+void Modeselect();
+void ModeSelectmenu();
+void initFreerunningADC();
 
 
 #endif /* CONTROLLER_H_ */

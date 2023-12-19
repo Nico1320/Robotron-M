@@ -5,6 +5,7 @@
 #include <avr/interrupt.h>
 #include <avr/sfr_defs.h>
 #include <stdbool.h>
+#include <math.h>
 
 // Include modules
 #include "./H_bridge/HBridge.h"
@@ -17,29 +18,29 @@
 //#include "./Bit_bang/ShiftRegister.h"
 
 // Defines
-#define DELAY_TIME_MS 35 // Set the sampling time in milliseconds
-
+#define DELAY_TIME_MS 800 // Set the sampling time in milliseconds
 // IR defines for selecting the sensor to read
 #define SENSOR_LEFT 0
 #define SENSOR_MIDDLE 1
 #define SENSOR_RIGHT 2
-
 // Ultrasonic defines
 #define MINIMUM_DISTANCE 10
 
-// global variable init
+//Defines -- ADC logic
+#define BUTTONS 3
+#define RESOLUTION 1023
+
+// Global var
+enum CarMode {Automatic, Slave, Manual};
+enum CarMode mode;
+
 bool serialFlag;
-bool keyPressed = false;
+bool keyPressed;
 bool debugMode;
 float inputRatio = 0.8;
-// Slave mode interruption flag set by ISR
-bool slaveModeActive = false;
-
-//Function prototypes
-void manualMode();
-void automaticMode();
-void slaveMode();
-void initializeModules();
+bool ModeActive = false;
+bool slaveModeActive = true;
+bool ScreenHome = false;
 
 void manualMode() {
 	// Wait for USART data to become available
@@ -62,52 +63,39 @@ void manualMode() {
 			break;
 		}
 	}
-
 	// Manual mode loop
 	while (!serialFlag) {
-		// Check for available USART data
-		if (usart0_nUnread() > 0) {
-			char data = usart0_receive();
-			switch (data) {
-				case 'w':
-				setPWM(255, 255);
-				goForward();
-				break;
+        if (usart0_nUnread() > 0) {
+	        char data = usart0_receive();
 
-				case 's':
-				setPWM(200, 200);
-				goBackward();
-				break;
+	        switch (data) {
+		        case 'F':
+		        setPWM(255, 255);
+		        goForward();
+		        break;
 
-				case 'a':
-				setPWM(200, 200);
-				zeroRadii(0);
-				break;
+		        case 'G':
+		        setPWM(200, 200);
+		        goBackward();
+		        break;
 
-				case 'd':
-				setPWM(200, 200);
-				zeroRadii(1);
-				break;
+		        case 'L':
+		        setPWM(200, 200);
+		        zeroRadii(0);
+		        break;
 
-				default:
-				usart0_transmit_str("Invalid input\r\n");
-				break;
-			}
+		        case 'R':
+		        setPWM(200, 200);
+		        zeroRadii(1);
+		        break;
 
-			// Set flag and introduce delay
-			keyPressed = true;
-			_delay_ms(DELAY_TIME_MS);
-			} else {
-			// Clear previous state if flag is set
-			if (keyPressed) {
+		        default:
+		        usart0_transmit_str("Invalid input\r\n");
 				clearPrevious();
-				keyPressed = false; // Reset the flag
-			}
-		}
-	}
-
-	// Clear USART registers after the loop
-	clearUSART();
+		        break;
+	        }
+        }
+     }
 }
 
 
@@ -193,22 +181,83 @@ void initializeModules() {
 
 	usart0_transmit_str("Main loop running!\r\n");
 //	ultrasonicInit();
+	initFreerunningADC();
 	sei();
 }
 
-void rgbtest() {
-	  while(1) {
-		  led[0].r=255;led[0].g=00;led[0].b=0;    // Write red to array
-		  ws2812_setleds(led,1);
-		  _delay_ms(500);                         // wait for 500ms.
-
-		  led[0].r=0;led[0].g=255;led[0].b=0;			// green
-		  ws2812_setleds(led,1);
-		  _delay_ms(500);
-
-		  led[0].r=0;led[0].g=00;led[0].b=255;		// blue
-		  ws2812_setleds(led,1);
-		  _delay_ms(500);
-	  }
+void initFreerunningADC() {
+	ADMUX |= (1 << REFS0); /* reference voltage on AVCC */
+	ADCSRA |= (1 << ADPS1) | (1 << ADPS0); /* ADC clock prescaler /8 */
+	ADCSRA |= (1 << ADEN); /* enable ADC */
+	ADCSRA |= (1 << ADATE); /* auto-trigger enable */
+	ADCSRA |= (1 << ADIE);
+	ADCSRA |= (1 << ADIF);
+	ADCSRB = 0;
 }
 
+//This interrupt should run when a mode has to be selected -- Otherwise use state change detection on pin PC0 to break on every mode.
+ISR(ADC_vect) {
+	float avg = (float)RESOLUTION / (float)BUTTONS;  // Cast RESOLUTION and BUTTONS to float before the division
+	uint16_t val = ADC;
+/*	char buffer[20];
+	dtostrf(val, 0, 0, buffer);
+	lcd_clrscr();
+	lcd_gotoxy(0,0);
+	lcd_puts(" ADC:");
+	lcd_gotoxy(5,0);
+	lcd_puts(buffer);
+	_delay_ms(4000);*/
+
+	if (val > (BUTTONS - 0.5) * avg) {
+		return;
+	}
+	
+	for (int i = 0; i < BUTTONS; i++) {
+		if (val < round((i + 0.5) * avg)) {
+			mode = i;
+			ModeActive = true;
+			return;
+		}
+	}
+
+	ADCSRA |= (1 << ADIF);
+	return;
+}
+
+void Modeselect() {
+	while (1) {
+		if (!ModeActive && !ScreenHome) {
+			ModeSelectmenu();
+			ScreenHome = true;			
+		}
+	 ADCSRA |= (1 << ADSC); /* start first conversion */
+		switch (mode) {
+			case Automatic:
+			//automaticMode();
+			break;
+			// Break using interrupt
+
+			case Slave:
+			slaveMode();
+			// Break using interrupt
+
+			case Manual:
+			// Break using interrupt
+			manualMode();
+			default:
+			break;
+		}
+	}
+}
+
+void ModeSelectmenu() {
+	lcd_clrscr();
+	lcd_gotoxy(0, 0);
+	lcd_puts("  Mode Selection");
+	lcd_gotoxy(0, 1);
+	lcd_puts("  A |  B |  C ");
+}
+
+void ScreenMode(){
+	return 0;
+}
