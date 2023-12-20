@@ -16,6 +16,7 @@ void initializeModules();
 void Modeselect();
 void ModeSelectmenu();
 void initFreerunningADC();
+void systemDataPrint(char *pdisplayMode, char *pInputString);
 
 
 #endif /* CONTROLLER_H_ */

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
@@ -257,6 +258,49 @@ void ModeSelectmenu() {
 	lcd_gotoxy(0, 1);
 	lcd_puts("  A |  B |  C ");
 }
+
+
+void systemDataPrint(char *pdisplayMode, char *pInputString){
+	// Store telemetrics data internally
+	char storedString[10] = "  ";
+	strcat(storedString,pInputString);
+	
+	if(strcmp(pdisplayMode,"Telemetrics") == 0){
+		lcd_clrscr();
+		lcd_gotoxy(0, 0);
+		lcd_puts("  Dir  SysT  Dist");
+		lcd_gotoxy(0, 1);
+		lcd_puts(pInputString);
+	}
+	
+	else if(strcmp(pdisplayMode,"SerialNotDet") == 0){
+		lcd_clrscr();
+		lcd_gotoxy(0, 0);
+		lcd_puts(" Serial not ");
+		lcd_gotoxy(0, 1);
+		lcd_puts(" Detected");
+		serialFlag = usart0_receive();
+	}
+	
+	else if(strcmp(pdisplayMode,"SerialDet") == 0){
+		lcd_clrscr();
+		lcd_gotoxy(0, 0);
+		lcd_puts(" Serial");
+		lcd_gotoxy(0, 1);
+		lcd_puts("Detected!");
+	}
+	
+	else if(strcmp(pdisplayMode,"Modeselect") == 0){
+		//ModeSelectmenu
+		lcd_clrscr();
+		lcd_gotoxy(0, 0);
+		lcd_puts("  Mode Selection");
+		lcd_gotoxy(0, 1);
+		lcd_puts("  A |  B |  C ");
+	}
+	
+}
+
 
 void ScreenMode(){
 	return 0;
