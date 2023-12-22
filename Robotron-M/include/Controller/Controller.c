@@ -8,6 +8,15 @@
 #include <stdbool.h>
 #include <math.h>
 
+float inputRatio = 0.8;
+bool serialFlag;
+bool ModeActive = false;
+bool slaveModeActive = true;
+bool ScreenHome = false;
+bool ButtonPressed;
+
+CarMode_t mode;
+
 // Include modules
 #include "./H_bridge/HBridge.h"
 #include "./Soft_serial/SoftSerial.h"
@@ -27,76 +36,62 @@
 // Ultrasonic defines
 #define MINIMUM_DISTANCE 10
 
-//Defines -- ADC logic
-#define BUTTONS 3
-#define RESOLUTION 1023
 
-// Global var
-enum CarMode {Automatic, Slave, Manual};
-enum CarMode mode;
-
-bool serialFlag;
-bool keyPressed;
-bool debugMode;
-float inputRatio = 0.8;
-bool ModeActive = false;
-bool slaveModeActive = true;
-bool ScreenHome = false;
-
-void manualMode() {
-	// Wait for USART data to become available
-	while (!serialFlag) {
-		lcd_clrscr();
-		lcd_gotoxy(0, 0);
-		lcd_puts(" Serial not ");
-		lcd_gotoxy(0, 1);
-		lcd_puts(" Detected");
-		serialFlag = usart0_receive();
-		if (serialFlag) {
+void Serialcheck() {
+		while (!serialFlag) {
 			lcd_clrscr();
 			lcd_gotoxy(0, 0);
-			lcd_puts(" Serial");
+			lcd_puts(" Serial not ");
 			lcd_gotoxy(0, 1);
-			lcd_puts("Detected!");
-			usart0_transmit_str("Receive ready!\r\n");
-			_delay_ms(3000);
-			serialFlag = false;
+			lcd_puts(" Detected");
+			serialFlag = usart0_receive();
+			if (serialFlag) {
+				lcd_clrscr();
+				lcd_gotoxy(0, 0);
+				lcd_puts(" Serial");
+				lcd_gotoxy(0, 1);
+				lcd_puts("Detected!");
+				usart0_transmit_str("Receive ready!\r\n");
+				_delay_ms(3000);
+				serialFlag = false;
+				break;
+			}
+		}
+}
+
+void manualMode() {
+	Serialcheck();
+	// Manual mode loop
+	if (usart0_nUnread() > 0) {
+	char data = usart0_receive();
+	
+		switch (data) {
+			case 'F':
+			setPWM(255, 255);
+			goForward();
+			break;
+
+			case 'G':
+			setPWM(200, 200);
+			goBackward();
+			break;
+
+			case 'L':
+			setPWM(200, 200);
+			zeroRadii(0);
+			break;
+
+			case 'R':
+			setPWM(200, 200);
+			zeroRadii(1);
+			break;
+
+			default:
+			usart0_transmit_str("Invalid input\r\n");
+			clearPrevious();
 			break;
 		}
 	}
-	// Manual mode loop
-	while (!serialFlag) {
-        if (usart0_nUnread() > 0) {
-	        char data = usart0_receive();
-
-	        switch (data) {
-		        case 'F':
-		        setPWM(255, 255);
-		        goForward();
-		        break;
-
-		        case 'G':
-		        setPWM(200, 200);
-		        goBackward();
-		        break;
-
-		        case 'L':
-		        setPWM(200, 200);
-		        zeroRadii(0);
-		        break;
-
-		        case 'R':
-		        setPWM(200, 200);
-		        zeroRadii(1);
-		        break;
-
-		        default:
-		        usart0_transmit_str("Invalid input\r\n");
-				clearPrevious();
-		        break;
-	        }
-        }
-     }
 }
 
 
@@ -169,10 +164,8 @@ void slaveMode() {
 
 void initializeModules() {
 	usart0_init();
-
 	initializeHbridge();
 	setupTimer();
-
 	// Display init
 	lcd_init(LCD_ON_DISPLAY);
 	lcd_backlight(0);
@@ -186,84 +179,41 @@ void initializeModules() {
 	sei();
 }
 
-void initFreerunningADC() {
-	ADMUX |= (1 << REFS0); /* reference voltage on AVCC */
-	ADCSRA |= (1 << ADPS1) | (1 << ADPS0); /* ADC clock prescaler /8 */
-	ADCSRA |= (1 << ADEN); /* enable ADC */
-	ADCSRA |= (1 << ADATE); /* auto-trigger enable */
-	ADCSRA |= (1 << ADIE);
-	ADCSRA |= (1 << ADIF);
-	ADCSRB = 0;
-}
 
-//This interrupt should run when a mode has to be selected -- Otherwise use state change detection on pin PC0 to break on every mode.
-ISR(ADC_vect) {
-	float avg = (float)RESOLUTION / (float)BUTTONS;  // Cast RESOLUTION and BUTTONS to float before the division
-	uint16_t val = ADC;
-/*	char buffer[20];
-	dtostrf(val, 0, 0, buffer);
-	lcd_clrscr();
-	lcd_gotoxy(0,0);
-	lcd_puts(" ADC:");
-	lcd_gotoxy(5,0);
-	lcd_puts(buffer);
-	_delay_ms(4000);*/
 
-	if (val > (BUTTONS - 0.5) * avg) {
-		return;
-	}
-	
-	for (int i = 0; i < BUTTONS; i++) {
-		if (val < round((i + 0.5) * avg)) {
-			mode = i;
-			ModeActive = true;
-			return;
-		}
-	}
-
-	ADCSRA |= (1 << ADIF);
-	return;
-}
 
 void Modeselect() {
 	while (1) {
 		if (!ModeActive && !ScreenHome) {
-			ModeSelectmenu();
+			mode = NoMode;
+			systemDataPrint("Modeselect","\0");
 			ScreenHome = true;			
 		}
-	 ADCSRA |= (1 << ADSC); /* start first conversion */
+		else if (ModeActive && !ScreenHome) {
+			systemDataPrint("Telemetrics", "somne information");
+			
+		}
+			
+		ADCSRA |= (1 << ADSC); /* start first conversion */
 		switch (mode) {
 			case Automatic:
-			//automaticMode();
+			automaticMode();
 			break;
-			// Break using interrupt
-
 			case Slave:
 			slaveMode();
-			// Break using interrupt
-
+			break;
 			case Manual:
-			// Break using interrupt
 			manualMode();
-			default:
+			case NoMode:
 			break;
 		}
 	}
 }
 
-void ModeSelectmenu() {
-	lcd_clrscr();
-	lcd_gotoxy(0, 0);
-	lcd_puts("  Mode Selection");
-	lcd_gotoxy(0, 1);
-	lcd_puts("  A |  B |  C ");
-}
-
-
 void systemDataPrint(char *pdisplayMode, char *pInputString){
 	// Store telemetrics data internally
 	char storedString[10] = "  ";
-	strcat(storedString,pInputString);
+	strcat(storedString,pInputString); // TBD with a function concatenation
 	
 	if(strcmp(pdisplayMode,"Telemetrics") == 0){
 		lcd_clrscr();
@@ -299,9 +249,4 @@ void systemDataPrint(char *pdisplayMode, char *pInputString){
 		lcd_puts("  A |  B |  C ");
 	}
 	
-}
-
-
-void ScreenMode(){
-	return 0;
 }
