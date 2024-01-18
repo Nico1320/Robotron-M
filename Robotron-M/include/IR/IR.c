@@ -41,46 +41,34 @@ int main(void)
 }
 */
 
-// Security pin init function to set the pins to be input 
+// Safety pin init function to set the pins to be input 
 void initIrPins(void)
 	{
 		
 		DDRB &= ~(1<<DDB0);
 		DDRB &= ~(1<<DDB1);
-		DDRB &= ~(1<<DDB2);
 	}
 	
 
 // Function to read IR sensor data
-int irSensorRead(int sensor_select)
+int irSensorRead(int sensor_select) // sensor_select parameter is used to select IR sensor to read from
 {
-	if (sensor_select == LEFT_IR_SENSOR)
+	// branching to read the corresponding sensor based on the function's input value
+	if (sensor_select == LEFT_IR_SENSOR) 
 	{
-		if (PINB & (1<<PINB0))
+		if (PINB & (1<<PINB0)) // 
 		{
-			return LINE_DETECTED;
+			return LINE_DETECTED; // LINE_DETECTED is a #define directive and it equals to 1. The return value is used in other sections of the code.
 		}
 		else
 		{
-			return LINE_NOT_DETECTED;
-		}
-	}
-	
-	else if (sensor_select == MIDDLE_IR_SENSOR)
-	{
-		if (PINB & (1<<PINB1))
-		{
-			return LINE_DETECTED;
-		}
-		else
-		{
-			return LINE_NOT_DETECTED;
+			return LINE_NOT_DETECTED; // LINE_NOT_DETECTED is a #define directive and it equals to 0. The return value is used in other sections of the code.
 		}
 	}
 	
 	else if (sensor_select == RIGHT_IR_SENSOR)
 	{
-		if (PINB & (1<<PINB2))
+		if (PINB & (1<<PINB1))
 		{
 			return LINE_DETECTED;
 		}
