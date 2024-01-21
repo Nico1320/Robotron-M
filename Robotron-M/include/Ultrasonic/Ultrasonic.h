@@ -8,8 +8,6 @@
 
 #ifndef ULTRASONIC_H_
 #define ULTRASONIC_H_
+uint8_t ultrasonicRead();
 void ultrasonicInit();
-float ultrasonicRead();
-
-
 #endif /*ULTRASONIC_H_ */

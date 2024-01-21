@@ -7,6 +7,7 @@
 #include <avr/sfr_defs.h>
 #include <stdbool.h>
 #include <math.h>
+#include "./Controller/Controller.h"
 
 float inputRatio = 0.8;
 bool serialFlag;
@@ -34,7 +35,7 @@ CarMode_t mode;
 #define SENSOR_MIDDLE 1
 #define SENSOR_RIGHT 2
 // Ultrasonic defines
-#define MINIMUM_DISTANCE 10
+#define MINIMUM_DISTANCE 12
 
 
 void Serialcheck() {
@@ -60,8 +61,9 @@ void Serialcheck() {
 }
 
 void manualMode() {
-	Serialcheck();
+	//Serialcheck();
 	// Manual mode loop
+	ScreenHome = false;
 	if (usart0_nUnread() > 0) {
 	char data = usart0_receive();
 	
@@ -88,84 +90,74 @@ void manualMode() {
 
 			default:
 			usart0_transmit_str("Invalid input\r\n");
-			clearPrevious();
+			clearPrevious(0);
 			break;
 		}
 	}
+
 }
 
 
 void automaticMode() {
-		turningRatio(inputRatio);
-		char ratioinput[8]; /*destination array size defined*/
-		char Lreslt[8];
-		char Rresult[8];
-		float Lspeed = OCR0A;
-		float Rspeed = OCR0B;
-		dtostrf(inputRatio, 5, 1, ratioinput); /*Destination string is printed*/
-
-		dtostrf(Lspeed, 5, 0, Lreslt); /*Destination string is printed*/
-		dtostrf(Rspeed, 5, 0, Rresult); /*Destination string is printed*/
-
-		usart0_transmit_str(ratioinput);
-		usart0_transmit_str("\r\n");
-		usart0_transmit_str(Lreslt);
-		usart0_transmit_str("\r\n");
-		usart0_transmit_str(Rresult);
-		usart0_transmit_str("\r\n");
-
+	ScreenHome = false;
+		//implement later
 }
 
 void slaveMode() {
-	
-	slaveModeActive = true;
-	
-	while(slaveModeActive)
-	{
-		// Reading the 3 IR sensors
-		int leftIrRead = irSensorRead(SENSOR_LEFT);
-		int middleIrRead = irSensorRead(SENSOR_MIDDLE);
-		int rightIrRead = irSensorRead(SENSOR_RIGHT);
-		
-		// Ultrasonic read
-		int ulsRead = (int)ultrasonicRead();
-		
-		// stops the car until distance > MINIMUM_DISTANCE
-		if(ulsRead < MINIMUM_DISTANCE)
-		{
-			// stopfunction(); has to be implemented
+ScreenHome = false;
+slaveModeActive = true;
+
+DDRB &= ~(1 << PINB7);
+
+	while (!slaveModeActive) {
+		if (!(PINB & (1 << PINB7))) { // Added a closing parenthesis here
+			slaveModeActive = true;
 		}
-		
-		// In all cases, MINIMUM_DISTANCE should be reviewed and replaced (if needed) to handle a predecessor which is getting closer but not within the minimum range
-		// Right turn
-		else if(ulsRead > MINIMUM_DISTANCE && (leftIrRead || (leftIrRead && middleIrRead)))
-		{	
-			// discuss the exact value and use #define + possible setPWM() refactor
-			turningRatio(2.0);
-		}
-		
-		// Go straight
-		else if(ulsRead > MINIMUM_DISTANCE && middleIrRead)
-		{
-				goForward(); // possible setPWM refactor also
-		}
-			
-		// Left turn
-		else if(ulsRead > MINIMUM_DISTANCE && (rightIrRead || (rightIrRead && middleIrRead)))
-		{
-			// discuss the exact value and use #define + possible setPWM() refactor
-			turningRatio(0.6);
-		}
-		
-		// Delay is needed here to minimize the frequency of direction change
 	}
 	
+	while (slaveModeActive) {
+		char ultrares[5];
+		volatile uint8_t ulsRead = ultrasonicRead();
+		int leftIrRead = irSensorRead(SENSOR_LEFT);
+		int rightIrRead = irSensorRead(SENSOR_RIGHT);
+		usart0_transmit_str(dtostrf(ulsRead, 0, 0, ultrares));
+		usart0_transmit_str("\r\n");
+		
+		
+		if (ulsRead > MINIMUM_DISTANCE) {
+			// Right turn
+			if (leftIrRead) {
+				goForward();
+				//setPWM(150, 60);
+				turningRatio(0.5, 150);
+			}
+			// Go straight
+			else if (!leftIrRead && !rightIrRead) {
+				goForward(); // possible setPWM refactor also
+				//setPWM(100, 100);
+				turningRatio(1, 150);
+			}
+			// Left turn
+			else if (rightIrRead) {
+				goForward();
+				//setPWM(60,150);
+				turningRatio(1.5, 150); // discuss the exact value and use #define + possible setPWM() refactor
+				} else {
+				
+				zeroRadii(false);
+				//setPWM(100, 100);
+				turningRatio(1, 100);
+				clearPrevious(false);
+			}
+			_delay_ms(DELAY_TIME_MS);
+		}
+	}
 }
+
 
 void initializeModules() {
 	usart0_init();
-	initializeHbridge();
-	setupTimer();
+
 	// Display init
 	lcd_init(LCD_ON_DISPLAY);
 	lcd_backlight(0);
@@ -174,8 +166,10 @@ void initializeModules() {
 	_delay_ms(500);
 
 	usart0_transmit_str("Main loop running!\r\n");
-//	ultrasonicInit();
+	ultrasonicInit();
 	initFreerunningADC();
+	initializeHbridge();
+	setupTimer();
 	sei();
 }
 
@@ -189,11 +183,10 @@ void Modeselect() {
 			systemDataPrint("Modeselect","\0");
 			ScreenHome = true;			
 		}
+		
 		else if (ModeActive && !ScreenHome) {
-			systemDataPrint("Telemetrics", "somne information");
-			
+			systemDataPrint("Telemetrics", "\0");
 		}
-			
 		ADCSRA |= (1 << ADSC); /* start first conversion */
 		switch (mode) {
 			case Automatic:
@@ -220,7 +213,7 @@ void systemDataPrint(char *pdisplayMode, char *pInputString){
 		lcd_gotoxy(0, 0);
 		lcd_puts("  Dir  SysT  Dist");
 		lcd_gotoxy(0, 1);
-		lcd_puts(pInputString);
+		lcd_puts("pInputString");
 	}
 	
 	else if(strcmp(pdisplayMode,"SerialNotDet") == 0){

@@ -45,8 +45,8 @@ int main(void)
 void initIrPins(void)
 	{
 		
-		DDRB &= ~(1<<DDB0);
-		DDRB &= ~(1<<DDB1);
+		DDRC &= ~(1<<DDC1);
+		DDRC &= ~(1<<DDC2);
 	}
 	
 
@@ -56,7 +56,7 @@ int irSensorRead(int sensor_select) // sensor_select parameter is used to select
 	// branching to read the corresponding sensor based on the function's input value
 	if (sensor_select == LEFT_IR_SENSOR) 
 	{
-		if (PINB & (1<<PINB0)) // 
+		if (PINC & (1<<PINC1)) // 
 		{
 			return LINE_DETECTED; // LINE_DETECTED is a #define directive and it equals to 1. The return value is used in other sections of the code.
 		}
@@ -68,7 +68,7 @@ int irSensorRead(int sensor_select) // sensor_select parameter is used to select
 	
 	else if (sensor_select == RIGHT_IR_SENSOR)
 	{
-		if (PINB & (1<<PINB1))
+		if (PINC & (1<<PINC2))
 		{
 			return LINE_DETECTED;
 		}

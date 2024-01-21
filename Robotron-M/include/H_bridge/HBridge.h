@@ -16,6 +16,6 @@ void zeroRadii();
 void goForward();
 void goBackward();
 void clearPrevious();
-void turningRatio(float ratio);
+void turningRatio(float ratio, uint8_t maxPWM);
 
 #endif /* MOTOR_H_ */

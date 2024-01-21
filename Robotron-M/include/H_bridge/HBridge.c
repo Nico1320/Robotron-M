@@ -6,6 +6,7 @@
  */ 
 
 #include <avr/io.h>
+#include <stdbool.h>
 #include <avr/sfr_defs.h>
 //#include "./Baremetal/Baremetal.h"
 #define _BV(bit) (1 << (bit)) //Set bit
@@ -22,11 +23,11 @@
 void initializeHbridge();
 void setupTimer();
 void setPWM(uint8_t, uint8_t);
-void zeroRadii();
+void zeroRadii(bool CW);
 void goForward();
 void goBackward();
-void clearPrevious();
-void turningRatio(float ratio);
+void clearPrevious(bool fast);
+void turningRatio(float ratio, uint8_t maxPWM);
 
 void initializeHbridge() {
     // Motor control initialization
@@ -49,44 +50,51 @@ void setPWM(uint8_t dutyCycleA, uint8_t dutyCycleB) {
     OCR0B = dutyCycleB;  // PD5
 }
 
-void zeroRadii(int CW) {
+void zeroRadii(bool CW) {
 	if (!CW) {
-		clearPrevious();
+		clearPrevious(false);
 		PORTD |= _BV(PIND7); // IN1
 		PORTB |= _BV(PINB2);  // IN4
 	} 
 	else if (CW) {
-		clearPrevious();
+		clearPrevious(false);
 		PORTB |= (_BV(PINB0) | _BV(PINB1));  // IN2 and IN4
 	}
 }
 
 void goForward() {
-	clearPrevious();
+	clearPrevious(false);
     PORTD |= (_BV(PIND7)); 
     PORTB |= (_BV(PINB1)); 
 }
 
 void goBackward() {
-	clearPrevious();
+	clearPrevious(false);
 	PORTB |= (_BV(PINB0) | _BV(PINB2));
 }
 
-void clearPrevious() {
+void clearPrevious(bool fast) {
+	
+	if (fast) {
+	//goBackward();
+	}
+	else {
 	PORTB &= ~(_BV(PINB0) | _BV(PINB1) | _BV(PINB2));
-	PORTD &= ~(_BV(PIND7));
+	PORTD &= ~(_BV(PIND7));	
+	}
+	
+
 }
 
-void turningRatio(float ratio) {
-	uint8_t maxChannelValue = 255;
+void turningRatio(float ratio, uint8_t maxPWM) {
 	if (ratio < 1) {
-		OCR0A = (maxChannelValue * ratio);
-		OCR0B = maxChannelValue;
+		OCR0A = (maxPWM * ratio);
+		OCR0B = maxPWM;
 		} else if (ratio > 1) {
-		OCR0A = maxChannelValue;
-		OCR0B = (maxChannelValue / ratio);
+		OCR0A = maxPWM;
+		OCR0B = (maxPWM / ratio);
 		} else {
-		OCR0A = maxChannelValue;
-		OCR0B = maxChannelValue;
+		OCR0A = maxPWM;
+		OCR0B = maxPWM;
 	}
 }

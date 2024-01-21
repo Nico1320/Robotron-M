@@ -13,7 +13,8 @@
 //Defines -- ADC logic
 #define BUTTONS 3
 #define RESOLUTION 1023
-
+int buttonstate = 0;
+char buuttonchar[5];
 
 void initFreerunningADC() {
 	ADMUX |= (1 << REFS0); /* reference voltage on AVCC */
@@ -30,23 +31,43 @@ ISR(ADC_vect) {
 	float avg = (float)RESOLUTION / (float)BUTTONS;  // Cast RESOLUTION and BUTTONS to float before the division
 	uint16_t val = ADC;
 
-
 	if (val > (BUTTONS - 0.5) * avg) {
-		return;
 	}
-	
-	for (int i = 0; i < BUTTONS; i++) {
-		if (val < round((i + 0.5) * avg) && !ModeActive) {
-			mode = Manual;
-			ModeActive = true;
-			return;
-		}
-		else if (ModeActive && ButtonPressed){
-			ModeActive = false;
-			ButtonPressed = false; 
-		}
+
+	else if (val < 120) {
+		 buttonstate = 1;
+	}
+	else if (val > 120 && val < 341) {
+		buttonstate = 2;
+	}
+	else if (val > 341 && val < 855) {
+		buttonstate = 3;
+	}
+
+	switch (buttonstate)
+	{
+	case 1:
+		mode = 1;
+		ModeActive = true;
+		break;
+		
+	case 2:
+		mode = 2;
+		ModeActive = true;
+		break;
+		
+	case 3:
+		mode = 3;
+		ModeActive = true;
+		break;
 	}
 
 	ADCSRA |= (1 << ADIF);
-	return;
 }
+
+/*
+else if (ModeActive && ButtonPressed){
+ModeActive = false;
+ButtonPressed = false;
+}
+}*/
