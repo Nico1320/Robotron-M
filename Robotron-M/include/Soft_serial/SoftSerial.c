@@ -43,9 +43,9 @@ void usart0_transmit_str(char *str);
  */
 void usart0_init(void)
 {
-    // Configure the baud rate
-    UBRR0H = (unsigned char)(myUBRR >> 8);
-    UBRR0L = (unsigned char)myUBRR;
+		// Configure the baud rate
+		UBRR0H = (unsigned char)(myUBRR >> 8);
+		UBRR0L = (unsigned char)myUBRR;
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
     // Enable USART receiver and transmitter
     UCSR0B = ((1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0));

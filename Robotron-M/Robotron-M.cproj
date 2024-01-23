@@ -179,10 +179,10 @@
     <Compile Include="include\IR\IR.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\LEDrgb\ws28xx.c">
+    <Compile Include="include\LEDrgb\ws28xx.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\LEDrgb\ws28xx.h">
+    <Compile Include="include\LEDrgb\ws28xx.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\PID\PID.c">

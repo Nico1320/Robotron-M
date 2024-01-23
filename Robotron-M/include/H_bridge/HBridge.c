@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <stdbool.h>
 #include <avr/sfr_defs.h>
+#include <math.h>
 //#include "./Baremetal/Baremetal.h"
 #define _BV(bit) (1 << (bit)) //Set bit
 
@@ -87,12 +88,17 @@ void clearPrevious(bool fast) {
 }
 
 void turningRatio(float ratio, uint8_t maxPWM) {
+	// Ensure that ratio is within the range [0, 2]
+	ratio = fmax(0.0f, fmin(2.0f, ratio));
+
 	if (ratio < 1) {
-		OCR0A = (maxPWM * ratio);
+		// Exponential behavior for OCR0A
+		OCR0A = (uint8_t)(maxPWM * pow(ratio, 2));
 		OCR0B = maxPWM;
 		} else if (ratio > 1) {
 		OCR0A = maxPWM;
-		OCR0B = (maxPWM / ratio);
+		// Exponential behavior for OCR0B
+		OCR0B = (uint8_t)(maxPWM / pow(ratio, 2));
 		} else {
 		OCR0A = maxPWM;
 		OCR0B = maxPWM;

@@ -1,3 +1,4 @@
+
 /*
  * Controller.h
  *
@@ -23,6 +24,10 @@ extern bool ModeActive;
 extern bool serialFlag;
 extern bool debugMode;
 extern bool ScreenHome;
+extern uint16_t val;
+extern volatile uint32_t millis;
+//extern volatile uint32_t nanos;
+
 
 typedef enum {
 	Automatic,
@@ -39,7 +44,7 @@ void slaveMode();
 void initializeModules();
 void Modeselect();
 void initFreerunningADC();
-void systemDataPrint(char *pdisplayMode, char *pInputString);
+void systemDataPrint(char *pdisplayMode);
 
 
 #endif /* CONTROLLER_H_ */
